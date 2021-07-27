@@ -14,6 +14,15 @@
 #define BLUE "\033[34m"
 #define WHITE "\033[37m"
 
+void check_neg(int ret, const char *msg) 
+{
+	if (ret < 0) 
+	{
+		perror(msg);
+		exit(EXIT_FAILURE);
+	}
+}
+
 int readFile(int fd_in) {
     char buffer[32];
     ssize_t count;
@@ -34,26 +43,30 @@ int readFile(int fd_in) {
 int main(int argc, char **argv) 
 {
     int num = atoi(argv[2]);//cast from char to int
-    int status,i,fd_in;
+    int status, status_argc,i,fd_in;
     pid_t child1, child2;
     time_t seconds;
     char buffer[32];
 
+    if( argc != 3)
+    {
+        status_argc = -1;
+        check_neg(status_argc, "error argc");
+    }
+
     // Creat and open file for reading and writting
     fd_in = open(argv[1], O_CREAT | O_RDWR);
 
-    child1 = fork(); //process creation (1st child)
+    child1 = fork(); //create a process (1st child)
 
     if(child1<0)
-    {
-        perror("fork");
-    }
+        check_neg(child1, "error fork");
     
     if(child1==0)
     {
     	printf(BLUE "[Child1] Started. PID=%d PPID=%d\n",getpid(), getppid());
     	
-        for (int i = 0; i < num+1; i++)
+        for (i = 0; i < num+1; i++)
         {
             if(i%2==0) //even
             {
@@ -69,16 +82,15 @@ int main(int argc, char **argv)
     }
     else 
     {
-        child2 = fork();//process creation (2nd child)
+        child2 = fork();//create a process (2nd child)
         if(child2<0)
-        {
-            perror("fork");
-        }
+            check_neg(child2, "error argc");
+
         if (child2 == 0) 
         {
         	printf(GREEN "[Child2] Started. PID=%d PPID=%d\n",getpid(), getppid());
 
-            for (int i = 0; i < num+1; i++)
+            for (i = 0; i < num+1; i++)
             {
                 if(i%2!=0) //odd
                 {
@@ -94,7 +106,7 @@ int main(int argc, char **argv)
         }
         else 
         {
-        	for (int i = 0; i < ((num/2)+1); i++)
+        	for (i = 0; i < ((num/2)+1); i++)
             {
             	time(&seconds);
                 printf(RED "[PARENT]: Heartbeat PID= %d Time= %ld\n", getpid(), seconds);
@@ -113,7 +125,7 @@ int main(int argc, char **argv)
  			lseek(fd_in,0,SEEK_SET);
 			readFile(fd_in);
 			close (fd_in);
-			remove(argv[1]);
+			remove(argv[1]); //delete .txt
             exit(0);
         }
     }
